@@ -1,0 +1,190 @@
+-- Step 1: Drop Existing Database
+DROP DATABASE IF EXISTS trainSystem;
+
+-- Step 2: Create Database
+CREATE DATABASE trainSystem;
+
+-- Step 3: Use Database
+USE trainSystem;
+
+-- Step 4: Create Tables
+
+-- Employee Manager Table
+CREATE TABLE employee_manager (
+    ssn VARCHAR(11) PRIMARY KEY, 
+    username VARCHAR(50), 
+    password VARCHAR(50), 
+    first_name VARCHAR(50), 
+    last_name VARCHAR(50)
+);
+
+-- Customer Table
+CREATE TABLE customer (
+    username VARCHAR(50) PRIMARY KEY, 
+    email VARCHAR(50), 
+    password VARCHAR(50), 
+    first_name VARCHAR(50), 
+    last_name VARCHAR(50)
+);
+
+-- Employee Customer Representative Table
+CREATE TABLE employee_customer_rep (
+    ssn CHAR(11), 
+    name_firstname VARCHAR(50), 
+    name_lastname VARCHAR(50), 
+    username VARCHAR(50) PRIMARY KEY, 
+    password VARCHAR(50)
+);
+
+-- Train Table
+CREATE TABLE Train (
+    train_id INT PRIMARY KEY AUTO_INCREMENT, 
+    num_seats INT
+);
+
+-- Station Table
+CREATE TABLE Station (
+    station_id INT PRIMARY KEY AUTO_INCREMENT, 
+    name VARCHAR(100), 
+    state VARCHAR(5), 
+    city VARCHAR(50)
+);
+
+-- Transit Line Table
+CREATE TABLE transit_line (
+    tl_nick VARCHAR(10) PRIMARY KEY, 
+    tl_name VARCHAR(50), 
+    origin_station_id INT, 
+    destination_station_id INT, 
+    fare FLOAT, 
+    FOREIGN KEY (origin_station_id) REFERENCES Station(station_id), 
+    FOREIGN KEY (destination_station_id) REFERENCES Station(station_id)
+);
+
+-- Transit Line Stops Table
+CREATE TABLE transit_line_stops (
+    stop_id INT NOT NULL PRIMARY KEY, 
+    t1_nick VARCHAR(10), 
+    number_of_stop INT, 
+    start_station INT, 
+    end_station INT,  
+    FOREIGN KEY (start_station) REFERENCES Station(station_id), 
+    FOREIGN KEY (end_station) REFERENCES Station(station_id), 
+    FOREIGN KEY (t1_nick) REFERENCES transit_line(tl_nick)
+);
+
+-- Transit Line Assignment Table
+CREATE TABLE transit_line_assign (
+    assign_id INT PRIMARY KEY, 
+    tl_nick VARCHAR(10), 
+    train_id INT, 
+    FOREIGN KEY (tl_nick) REFERENCES transit_line(tl_nick), 
+    FOREIGN KEY (train_id) REFERENCES Train(train_id)
+);
+
+-- Transit Line Timing Table
+CREATE TABLE transit_line_timing (
+    assign_id INT, 
+    stop_id INT, 
+    departure_time TIME, 
+    arrival_time TIME, 
+    PRIMARY KEY (assign_id, stop_id), 
+    FOREIGN KEY (assign_id) REFERENCES transit_line_assign(assign_id), 
+    FOREIGN KEY (stop_id) REFERENCES transit_line_stops(stop_id)
+);
+
+-- Reservation Table
+CREATE TABLE reservation (
+    reservation_id INT AUTO_INCREMENT PRIMARY KEY, 
+    username VARCHAR(50), 
+    total_cost DOUBLE, 
+    origin_station INT, 
+    destination_station INT, 
+    assign_id INT, 
+    reserved_date DATE, 
+    ticket_bought_date DATE, 
+    trip ENUM('Round', 'Oneway') NOT NULL, 
+    fare_type ENUM('Disabled', 'Senior', 'Child', 'Normal') NOT NULL, 
+    FOREIGN KEY (username) REFERENCES customer(username), 
+    FOREIGN KEY (assign_id) REFERENCES transit_line_assign(assign_id), 
+    FOREIGN KEY (origin_station) REFERENCES Station(station_id), 
+    FOREIGN KEY (destination_station) REFERENCES Station(station_id)
+);
+
+-- Step 5: Insert Data
+
+-- Insert into Employee Manager
+INSERT INTO employee_manager (ssn, username, password, first_name, last_name) 
+VALUES 
+('000-00-0000', 'admin', 'admin', 'admin', 'admin'),
+('123-45-6789', 'manager1', 'password123', 'John', 'Doe'),
+('987-65-4321', 'manager2', 'password456', 'Jane', 'Smith');
+
+-- Insert into Customer
+INSERT INTO customer (username, email, password, first_name, last_name) 
+VALUES 
+('customer1', 'customer1@example.com', 'custpass1', 'Alice', 'Johnson'),
+('customer2', 'customer2@example.com', 'custpass2', 'Bob', 'Brown');
+
+-- Insert into Train
+INSERT INTO Train (num_seats) 
+VALUES 
+(100), (150);
+
+-- Insert into Station
+INSERT INTO Station (name, state, city) 
+VALUES 
+('NEW YORK', 'NY', 'New York'),
+('Secaucus Junction', 'NJ', 'Secaucus'),
+('NEWARK PENN STA', 'NJ', 'Newark'),
+('North Elizabeth', 'NJ', 'Elizabeth'),
+('Elizabeth', 'NJ', 'Elizabeth'),
+('Linden', 'NJ', 'Linden'),
+('TRENTON', 'NJ', 'Trenton');
+
+-- Insert into Transit Line
+-- Two lines: regular and express
+INSERT INTO transit_line (tl_nick, tl_name, origin_station_id, destination_station_id, fare) 
+VALUES 
+('T1', 'Regular Service', 1, 7, 20.00), 
+('T2', 'Express Service', 1, 7, 50.00);
+
+-- Insert into Transit Line Stops
+-- Regular Service
+INSERT INTO transit_line_stops (stop_id, t1_nick, number_of_stop, start_station, end_station) 
+VALUES 
+(1, 'T1', 1, 1, 2),
+(2, 'T1', 2, 2, 3),
+(3, 'T1', 3, 3, 4),
+(4, 'T1', 4, 4, 5),
+(5, 'T1', 5, 5, 6),
+(6, 'T1', 6, 6, 7);
+
+-- Express Service
+INSERT INTO transit_line_stops (stop_id, t1_nick, number_of_stop, start_station, end_station) 
+VALUES 
+(7, 'T2', 1, 1, 3),
+(8, 'T2', 2, 3, 7);
+
+-- Insert into Transit Line Assignment
+INSERT INTO transit_line_assign (assign_id, tl_nick, train_id) 
+VALUES 
+(1, 'T1', 1), 
+(2, 'T2', 2);
+
+-- Insert into Transit Line Timing
+-- Regular Service
+INSERT INTO transit_line_timing (assign_id, stop_id, departure_time, arrival_time) 
+VALUES 
+(1, 1, '08:00:00', '08:15:00'),
+(1, 2, '08:20:00', '08:35:00'),
+(1, 3, '08:40:00', '08:55:00'),
+(1, 4, '09:00:00', '09:15:00'),
+(1, 5, '09:20:00', '09:35:00'),
+(1, 6, '09:40:00', '10:00:00');
+
+-- Express Service
+INSERT INTO transit_line_timing (assign_id, stop_id, departure_time, arrival_time) 
+VALUES 
+(2, 7, '08:30:00', '08:50:00'),
+(2, 8, '08:55:00', '09:25:00');
